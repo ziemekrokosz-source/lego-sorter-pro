@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { SetSearch } from './components/SetSearch';
-import { SetCard } from './components/SetCard';
-import { SetDetail } from './components/SetDetail';
-import { fetchLegoSetData } from './services/geminiService';
+import { SetSearch } from './SetSearch';
+import { SetCard } from './SetCard';
+import { SetDetail } from './SetDetail';
+import { fetchLegoSetData } from './geminiService';
 import { AppState } from './types';
 
 const App: React.FC = () => {
