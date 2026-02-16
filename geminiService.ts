@@ -15,7 +15,7 @@ export const fetchLegoSetData = async (setNumber: string): Promise<LegoSet> => {
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3-flash",
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
