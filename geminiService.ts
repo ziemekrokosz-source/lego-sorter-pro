@@ -1,86 +1,83 @@
-console.log("FORCE BUILD 3");
 import { GoogleGenAI, Type } from "@google/genai";
 import { LegoSet, LegoPart } from "../types";
 
 export const fetchLegoSetData = async (setNumber: string): Promise<LegoSet> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
+  // Tworzymy instancję tuż przed wywołaniem, aby mieć pewność co do klucza API
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
-  const prompt = `COMPLETE INVENTORY SCAN: Fetch the 100% full list of parts for LEGO set ${setNumber}.
+  const prompt = `Jesteś ekspertem LEGO. Znajdź pełną listę części dla zestawu LEGO o numerze: ${setNumber}.
   
-  MANDATORY DATA FOR EACH PART:
-  1. Part Name & Color.
-  2. Quantity in this set.
-  3. Design ID (e.g., 3001 for a 2x4 brick).
-  4. Element ID (e.g., 4113233).
-  
-  Return ALL parts. DO NOT TRUNCATE. Use BrickLink or Rebrickable as source of truth.`;
+  WYMAGANIA:
+  1. Zwróć WSZYSTKIE elementy (klocki) znajdujące się w tym zestawie.
+  2. Dla każdej części podaj: Nazwę, Kolor, Ilość, Design ID i Element ID.
+  3. Użyj Google Search, aby zweryfikować dane na BrickLink lub Rebrickable.
+  4. Odpowiedź MUSI być czystym obiektem JSON.`;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-1.5-flash",
-    contents: prompt,
-    config: {
-      tools: [{ googleSearch: {} }],
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          name: { type: Type.STRING },
-          theme: { type: Type.STRING },
-          totalParts: { type: Type.NUMBER },
-          parts: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                name: { type: Type.STRING },
-                color: { type: Type.STRING },
-                quantity: { type: Type.NUMBER },
-                description: { type: Type.STRING },
-                designId: { type: Type.STRING },
-                elementId: { type: Type.STRING }
-              },
-              required: ["name", "color", "quantity", "description", "designId", "elementId"]
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: prompt,
+      config: {
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            name: { type: Type.STRING },
+            theme: { type: Type.STRING },
+            totalParts: { type: Type.NUMBER },
+            parts: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING },
+                  color: { type: Type.STRING },
+                  quantity: { type: Type.NUMBER },
+                  description: { type: Type.STRING },
+                  designId: { type: Type.STRING },
+                  elementId: { type: Type.STRING }
+                },
+                required: ["name", "color", "quantity", "description", "designId", "elementId"]
+              }
             }
-          }
-        },
-        required: ["name", "theme", "totalParts", "parts"]
+          },
+          required: ["name", "theme", "totalParts", "parts"]
+        }
       }
-    }
-  });
+    });
 
-  const text = response.text;
-  if (!text) throw new Error("Brak danych z modelu.");
+    const text = response.text;
+    if (!text) throw new Error("Model nie zwrócił żadnych danych.");
 
-  let rawData;
-    try {
-      rawData = JSON.parse(text.trim());
-    } catch (e) {
-      console.error("Niepoprawny JSON:", text);
-      throw new Error("Model zwrócił błędne dane.");
-    }
-  
-  const parts: LegoPart[] = rawData.parts.map((p: any, index: number) => {
-    // Oficjalny serwer obrazów LEGO po Element ID
-    const legoImg = `https://www.lego.com/service/bricks/5/2/${p.elementId}`;
+    const rawData = JSON.parse(text.trim());
     
-    return {
-      ...p,
-      id: `part-${Date.now()}-${index}`,
-      collected: 0,
-      imageUrl: legoImg 
-    };
-  });
+    const parts: LegoPart[] = rawData.parts.map((p: any, index: number) => {
+      // Oficjalny serwer obrazów LEGO używa Element ID
+      const legoImg = `https://www.lego.com/service/bricks/5/2/${p.elementId}`;
+      
+      return {
+        ...p,
+        id: `part-${Date.now()}-${index}`,
+        collected: 0,
+        imageUrl: legoImg 
+      };
+    });
 
-  return {
-    id: `set-${Date.now()}`,
-    number: setNumber,
-    name: rawData.name,
-    theme: rawData.theme,
-    totalParts: rawData.totalParts || parts.reduce((acc, p) => acc + p.quantity, 0),
-    imageUrl: `https://images.brickset.com/sets/images/${setNumber}-1.jpg`,
-    parts,
-    lastModified: Date.now(),
-    externalUrls: response.candidates?.[0]?.groundingMetadata?.groundingChunks
-      ?.filter(c => c.web).map(c => ({ title: c.web!.title, uri: c.web!.uri })) || []
-  };
+    return {
+      id: `set-${Date.now()}`,
+      number: setNumber,
+      name: rawData.name,
+      theme: rawData.theme,
+      totalParts: rawData.totalParts || parts.reduce((acc, p) => acc + p.quantity, 0),
+      imageUrl: `https://images.brickset.com/sets/images/${setNumber}-1.jpg`,
+      parts,
+      lastModified: Date.now(),
+      externalUrls: response.candidates?.[0]?.groundingMetadata?.groundingChunks
+        ?.filter(c => c.web).map(c => ({ title: c.web!.title, uri: c.web!.uri })) || []
+    };
+  } catch (error: any) {
+    console.error("Gemini API Error:", error);
+    throw new Error(`Błąd systemu: ${error.message || "Nie udało się pobrać danych zestawu."}`);
+  }
 };
