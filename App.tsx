@@ -86,7 +86,7 @@ const App: React.FC = () => {
   const activeSet = state.sets.find(s => s.id === state.activeSetId);
 
   return (
-    <Layout>
+    <>
       {state.error && (
         <div className="mb-6 bg-red-600 border-4 border-black text-white px-4 py-3 font-black uppercase flex items-center justify-between hard-shadow animate-bounce">
           <div className="flex items-center gap-3">
@@ -143,7 +143,7 @@ const App: React.FC = () => {
           onClose={() => setState(p => ({ ...p, activeSetId: null }))}
         />
       )}
-    </Layout>
+    </>
   );
 };
 
