@@ -16,7 +16,7 @@ export const fetchLegoSetData = async (setNumber: string): Promise<LegoSet> => {
   Return ALL parts. DO NOT TRUNCATE. Use BrickLink or Rebrickable as source of truth.`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-1.5-pro",
+    model: "gemini-1.5-flash",
     contents: prompt,
     config: {
       tools: [{ googleSearch: {} }],
