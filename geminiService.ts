@@ -1,7 +1,6 @@
 console.log("FORCE BUILD 3");
 import { GoogleGenAI, Type } from "@google/genai";
 import { LegoSet, LegoPart } from "../types";
-console.log("API KEY:", import.meta.env.VITE_API_KEY);
 
 export const fetchLegoSetData = async (setNumber: string): Promise<LegoSet> => {
   const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
