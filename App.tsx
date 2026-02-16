@@ -26,8 +26,11 @@ const App: React.FC = () => {
   });
 
   useEffect(() => {
+  const timer = setTimeout(() => {
     localStorage.setItem('lego_part_master_state', JSON.stringify(state));
-  }, [state]);
+  }, 500);
+  return () => clearTimeout(timer);
+}, [state]);
 
   const handleSearch = async (setNumber: string) => {
     setState(prev => ({ ...prev, isSearching: true, error: null }));
