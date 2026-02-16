@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { LegoSet, LegoPart } from '../types';
+import { LegoSet, LegoPart } from './types';
 
 interface SetDetailProps {
   set: LegoSet;
