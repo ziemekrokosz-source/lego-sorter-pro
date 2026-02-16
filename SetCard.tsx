@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LegoSet } from '../types';
+import { LegoSet } from './types';
 
 interface SetCardProps {
   set: LegoSet;
