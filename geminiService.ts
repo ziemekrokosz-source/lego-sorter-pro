@@ -1,3 +1,4 @@
+console.log("FORCE BUILD 3");
 import { GoogleGenAI, Type } from "@google/genai";
 import { LegoSet, LegoPart } from "../types";
 console.log("API KEY:", import.meta.env.VITE_API_KEY);
